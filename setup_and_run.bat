@@ -5,11 +5,11 @@ setlocal enabledelayedexpansion
 REM ============================================================================
 REM Script: setup_and_run.bat
 REM Purpose: Attempts to install Python (via winget), create venv, install
-REM          requirements, and run the CSV to XLSX converter.
+REM          requirements, and run the CSV to XLS converter.
 REM REQUIRES: Administrator privileges, winget, Internet connection.
 REM ============================================================================
 
-title CSV zu XLSX Konverter Setup und Ausführung
+title CSV zu XLS Konverter Setup und Ausführung
 
 
 
@@ -68,24 +68,17 @@ REM --- Activate Virtual Environment and Install Requirements ---
 echo Aktiviere virtuelle Umgebung...
 call .\venv\Scripts\activate.bat
 
-echo Überprüfe/Installiere benötigte Pakete (openpyxl)...
-REM Check if already installed in venv
-pip show openpyxl > nul 2>&1
+echo Installiere/Aktualisiere Pakete aus requirements.txt...
+pip install -r requirements.txt
 if %errorLevel% == 0 (
-    echo openpyxl ist bereits in der virtuellen Umgebung installiert.
+    echo Pakete erfolgreich installiert/aktualisiert.
 ) else (
-    echo Installiere Pakete aus requirements.txt...
-    pip install -r requirements.txt
-    if %errorLevel% == 0 (
-        echo Pakete erfolgreich installiert.
-    ) else (
-        echo ============================================================
-        echo FEHLER: Konnte Pakete mit pip nicht installieren. Exit code: %errorLevel%
-        echo Überprüfe die Internetverbindung und mögliche Fehlermeldungen oben.
-        echo ============================================================
-        pause
-        exit /b 1
-    )
+    echo ============================================================
+    echo FEHLER: Konnte Pakete mit pip nicht installieren. Exit code: %errorLevel%
+    echo Überprüfe die Internetverbindung und mögliche Fehlermeldungen oben.
+    echo ============================================================
+    pause
+    exit /b 1
 )
 
 REM --- Check for start_conversion.py ---
@@ -102,10 +95,10 @@ if %errorLevel% == 0 (
 )
 
 REM --- Run the Conversion Script ---
-echo Starte den CSV zu XLSX Konvertierungsprozess...
+echo Starte den CSV zu XLS Konvertierungsprozess...
 echo Die Ausgabe des Konverters wird unten angezeigt:
 echo --------------------------------------------
-python start_conversion.py %* 
+python start_conversion.py %*
 REM (%* übergibt alle Argumente von setup_and_run.bat an start_conversion.py)
 
 echo --------------------------------------------

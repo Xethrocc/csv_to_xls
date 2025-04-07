@@ -1,8 +1,8 @@
 import csv
 import sys
-import openpyxl
+import xlwt # Changed from openpyxl
 import os
-import argparse # Import argparse
+import argparse
 
 def read_csv_data(file_path):
     """Reads data from a CSV file, attempting to detect comma or semicolon delimiters.
@@ -48,46 +48,46 @@ def read_csv_data(file_path):
     except Exception as e:
         print(f"Error reading CSV file {file_path}: {e}", file=sys.stderr)
         return [] # Return empty list on other errors
-def write_xlsx_data(data, output_file_path):
-    """Writes data to an XLSX file.
+
+def write_xls_data(data, output_file_path): # Renamed function
+    """Writes data to an XLS file using xlwt.
 
     Args:
         data (list): A list of lists representing the data to write.
-        output_file_path (str): The path to the output XLSX file.
+        output_file_path (str): The path to the output XLS file.
 
     Returns:
         bool: True if writing was successful, False otherwise.
     """
     try:
-        workbook = openpyxl.Workbook()
-        sheet = workbook.active
+        workbook = xlwt.Workbook() # Use xlwt Workbook
+        sheet = workbook.add_sheet('Sheet1') # Add a sheet
 
-        for row_data in data:
-            # Attempt to convert numeric strings to numbers
-            processed_row = []
-            for item in row_data:
+        for r_idx, row_data in enumerate(data):
+            for c_idx, item in enumerate(row_data):
+                # Attempt to convert numeric strings to numbers
                 try:
                     # Try converting to float first (handles ints and floats)
-                    processed_row.append(float(item))
+                    numeric_value = float(item)
+                    sheet.write(r_idx, c_idx, numeric_value) # Write numeric value
                 except (ValueError, TypeError):
-                    # If conversion fails, keep it as a string
-                    processed_row.append(item)
-            sheet.append(processed_row) # Append the processed row
+                    # If conversion fails, write it as a string
+                    sheet.write(r_idx, c_idx, item) # Write string value
 
-        workbook.save(output_file_path)
+        workbook.save(output_file_path) # Save the workbook
         print(f"Successfully wrote data to {output_file_path}")
         return True
     except PermissionError:
         print(f"Error: Permission denied when trying to write to {output_file_path}", file=sys.stderr)
         return False
     except Exception as e:
-        print(f"Error writing XLSX file {output_file_path}: {e}", file=sys.stderr)
+        print(f"Error writing XLS file {output_file_path}: {e}", file=sys.stderr)
         return False
 
 
 # --- Function for single file conversion ---
 def process_single_file(input_path, output_path):
-    """Handles the conversion of a single CSV file to XLSX."""
+    """Handles the conversion of a single CSV file to XLS.""" # Updated docstring
     print(f"--- Processing single file ---")
     print(f"Input: {input_path}")
     print(f"Output: {output_path}")
@@ -102,10 +102,10 @@ def process_single_file(input_path, output_path):
 
     if csv_data:
         print("CSV data read successfully.")
-        if write_xlsx_data(csv_data, output_path):
+        if write_xls_data(csv_data, output_path): # Call renamed function
             print("Conversion completed successfully.")
         else:
-            print("Conversion failed during XLSX writing.")
+            print("Conversion failed during XLS writing.") # Updated message
             sys.exit(1) # Exit with an error code
     else:
         print(f"Could not read CSV data from {input_path}. Exiting.")
@@ -138,20 +138,20 @@ def process_folder(input_dir='input', output_dir='output'):
     for filename in os.listdir(input_dir):
         if filename.lower().endswith('.csv'):
             input_path = os.path.join(input_dir, filename)
-            # Construct output path, replacing .csv with .xlsx (case-insensitive)
+            # Construct output path, replacing .csv with .xls (case-insensitive)
             base, _ = os.path.splitext(filename)
-            output_filename = base + '.xlsx'
+            output_filename = base + '.xls' # Changed extension to .xls
             output_path = os.path.join(output_dir, output_filename)
-            
+
             print(f"\nProcessing '{filename}' -> '{output_filename}'")
-            
+
             csv_data = read_csv_data(input_path)
             if csv_data:
-                if write_xlsx_data(csv_data, output_path):
+                if write_xls_data(csv_data, output_path): # Call renamed function
                     print(f"Successfully converted '{filename}'.")
                     converted_count += 1
                 else:
-                    print(f"Failed to write XLSX for '{filename}'. Skipping.")
+                    print(f"Failed to write XLS for '{filename}'. Skipping.") # Updated message
                     skipped_count += 1
             else:
                 print(f"Could not read data from '{filename}'. Skipping.")
@@ -170,25 +170,30 @@ def process_folder(input_dir='input', output_dir='output'):
 # --- Main execution logic ---
 def main():
     parser = argparse.ArgumentParser(
-        description="Convert CSV file(s) to XLSX format. Detects comma or semicolon delimiters.",
+        description="Convert CSV file(s) to XLS format. Detects comma or semicolon delimiters.", # Updated description
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   To convert a single file:
-    python converter.py -i data.csv -o converted_data.xlsx
+    python converter.py -i data.csv -o converted_data.xls # Updated example extension
 
-  To automatically convert all *.csv files in the 'input' folder to the 'output' folder:
+  To automatically convert all *.csv files in the 'input' folder to the 'output' folder (as *.xls): # Updated example description
     python converter.py
 """
     )
     parser.add_argument("-i", "--input", help="Path to the input CSV file (for single file conversion).", metavar='FILE')
-    parser.add_argument("-o", "--output", help="Path for the output XLSX file (for single file conversion).", metavar='FILE')
+    parser.add_argument("-o", "--output", help="Path for the output XLS file (for single file conversion).", metavar='FILE') # Updated help text
 
     args = parser.parse_args()
 
     # Decide mode based on arguments
     if args.input and args.output:
         # Single file mode
+        # Ensure output file has .xls extension if user didn't specify
+        if not args.output.lower().endswith('.xls'):
+             base, _ = os.path.splitext(args.output)
+             args.output = base + '.xls'
+             print(f"Warning: Output filename did not end with .xls. Changed to: {args.output}", file=sys.stderr)
         process_single_file(args.input, args.output)
     elif not args.input and not args.output:
         # Folder processing mode (default folders: 'input' and 'output')
